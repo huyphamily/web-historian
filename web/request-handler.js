@@ -34,6 +34,7 @@ var getRequest = function(req, res){
       archive.get(url, res, sendRequest);
     } else {
       //send 404
+      console.log('nope');
       sendRequest(res, 'NOT-FOUND', 404);
     }
 

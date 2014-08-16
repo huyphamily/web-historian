@@ -1,1 +1,1 @@
-{"www.google.com":"./archives/sites/www.google.com"}
+{"www.google.com":"./archives/sites/www.google.com","www.yahoo.com":"./archives/sites/www.yahoo.com","www.reddit.com":"./archives/sites/www.reddit.com"}

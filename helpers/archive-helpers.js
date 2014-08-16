@@ -1,6 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 var _ = require('underscore');
+var urlParser = require('url');
 
 /*
  * You will need to reuse the same paths many times over in the course of this sprint.
@@ -27,22 +28,28 @@ exports.initialize = function(pathsObj){
 
 // Get the webpage, and send to user
 exports.get = function(url, response, report, callback){
+  //gets rid of the http
+  var tempUrl = urlParser.parse(url).hostname;
+  if( tempUrl !== null ){
+    url = tempUrl;
+  }
+  console.log(url);
   // Check if url is in list
-
   exports.isUrlInList(url, function(data, archive, siteList){
     //if not then send error
     if(data === false){
       if(typeof callback === 'function'){
-          url = url.split('=').pop();
+          //url = url.split('=').pop();
           callback(url, siteList, report);
        } else {
-        report(response, "NOT FOUND", 404);
+        report(response, "URL NOT FOUND", 404);
       }
     } else {
     //if it is
       exports.isURLArchived(archive, function(data, pathToFiles){
         if(data === false){
-          report(response, "NOT FOUND", 404);
+          console.log(archive);
+          report(response, "ARCHIVE NOT FOUND", 404);
         }
         else{
           exports.downloadUrls(pathToFiles, response, report);
@@ -59,6 +66,7 @@ exports.post = function(request, response, report){
       data += partial;
   });
   request.on('end', function(){
+    data = data.split('=').pop();
     exports.get(data, response, report, function(url, siteList, report){
       exports.addUrlToList(url, siteList, function (loading){
         report(response, loading, 302);
@@ -68,7 +76,7 @@ exports.post = function(request, response, report){
 };
 
 exports.readListOfUrls = function(callback){
-  fs.readFile(exports.paths.list, {'encoding': 'utf-8'}, function(err,data){
+  fs.readFile(exports.paths.list, "utf8", function(err,data){
     var parsed = {};
     try {
       if(data !== ""){
@@ -76,7 +84,8 @@ exports.readListOfUrls = function(callback){
       }
       callback(err, parsed);
     } catch(e) {
-      callback(err);
+      console.log(e.message);
+      callback(e);
     }
   });
 };
@@ -101,7 +110,7 @@ exports.isUrlInList = function(url, callback){
 
 //null values means it has not been archived
 exports.addUrlToList = function(url, siteList, callback){
-  siteList[url] = null;
+  siteList[url] = siteList[url] || null;
   var save = JSON.stringify(siteList);
   fs.writeFile(exports.paths.list,save, function(err){
       fs.readFile(exports.paths.siteAssets + '/loading.html', "utf8",function(err,data){
