@@ -56,7 +56,7 @@ describe("Node Server Request Listener Function", function() {
     var url = "www.example.com";
     var req = new stubs.Request("/", "POST", {url: url});
 
-    // Reset the test file and process request
+    //Reset the test file and process request
     fs.writeFileSync(archive.paths.list, "");
     handler.handleRequest(req, res);
 
@@ -65,7 +65,8 @@ describe("Node Server Request Listener Function", function() {
       function(){
         var fileContents = fs.readFileSync(archive.paths.list, 'utf8');
         expect(res._responseCode).to.equal(302);
-        expect(fileContents).to.equal(url + "\n");
+        var saved = JSON.parse(fileContents);
+        expect(Object.keys(saved).shift()).to.equal(url);
         done();
     });
   });
@@ -88,18 +89,17 @@ describe("Node Server Request Listener Function", function() {
 describe("html fetcher helpers", function(){
 
   it("should have a 'readListOfUrls' function", function(done){
-    var urlArray = ["example1.com", "example2.com"];
+    var urlList = JSON.parse('{"example1.com":null,"example2.com":null,"www.google.com":"./archives/sites/www.google.com"}');
     var resultArray;
-
-    fs.writeFileSync(archive.paths.list, urlArray.join("\n"));
-    archive.readListOfUrls(function(urls){
-      resultArray = urls;
+    fs.writeFileSync(archive.paths.list, JSON.stringify(urlList));
+    archive.readListOfUrls(function(err, urls){
+      resultArray = Object.keys(urls);
     });
 
     waitForThen(
       function() { return resultArray; },
       function(){
-        expect(resultArray).to.deep.equal(urlArray);
+        expect(resultArray).to.deep.equal(Object.keys(urlList));
         done();
     });
   });

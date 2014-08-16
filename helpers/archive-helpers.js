@@ -25,43 +25,60 @@ exports.initialize = function(pathsObj){
 // The following function names are provided to you to suggest how you might
 // modularize your code. Keep it clean!
 
-
 // Get the webpage, and send to user
-exports.get = function(url, response, report){
+exports.get = function(url, response, report, callback){
   // Check if url is in list
-  exports.isUrlInList(url, function(data, archive){
+
+  exports.isUrlInList(url, function(data, archive, siteList){
     //if not then send error
     if(data === false){
-      //
-      console.log('failed isInList');
-      report(response, "NOT FOUND", 404);
-    }
-    else {
-    //if it is
-    exports.isURLArchived(archive, function(data, pathToFiles){
-
-      if(data === false){
-        //if not, send error
-        console.log('isURLArchived');
+      if(typeof callback === 'function'){
+          url = url.split('=').pop();
+          callback(url, siteList, report);
+       } else {
         report(response, "NOT FOUND", 404);
       }
-      else{
-        //if it is
-        //send the data
-          //to who?\
-            //$response
-        exports.downloadUrls(pathToFiles, response);
-
-      }
-
-    });
+    } else {
+    //if it is
+      exports.isURLArchived(archive, function(data, pathToFiles){
+        if(data === false){
+          report(response, "NOT FOUND", 404);
+        }
+        else{
+          exports.downloadUrls(pathToFiles, response, report);
+        }
+      });
     }
   });
+};
 
+
+exports.post = function(request, response, report){
+  var data = '';
+  request.on('data', function(partial){
+      data += partial;
+  });
+  request.on('end', function(){
+    exports.get(data, response, report, function(url, siteList, report){
+      exports.addUrlToList(url, siteList, function (loading){
+        report(response, loading, 302);
+      });
+    });
+  });
 };
 
 exports.readListOfUrls = function(callback){
-  fs.readFile(exports.paths.list, {'encoding': 'utf-8'}, callback);
+  fs.readFile(exports.paths.list, {'encoding': 'utf-8'}, function(err,data){
+    var parsed = {};
+    try {
+      if(data !== ""){
+        parsed = JSON.parse(data);
+      }
+      callback(err, parsed);
+    } catch(e) {
+      callback(err);
+    }
+  });
 };
 
 //checks if in list, returns true false
@@ -73,27 +90,24 @@ exports.isUrlInList = function(url, callback){
       //logit
       console.log(err);
     }else{
-      var sites =  JSON.parse(data);
+      var sites =  data;
       var archive = sites[url];
-      console.log('url is =>', url);
-      console.log('sites is =>', sites);
-      console.log('archive is =>', archive);
-      callback((archive !== undefined), archive);
+      callback((archive !== undefined), archive, sites);
     }
 
   });
-  //checks if url is in list
-  //if it is in the list, do something
-  //if not 
+
 };
 
-exports.addUrlToList = function(){
-  //get the list
-  //parsefrom json
-  //is it already in the list?
-  //if not, add it to the list as key, with value as null
-    //parse to json 
-    //write json to file
+//null values means it has not been archived
+exports.addUrlToList = function(url, siteList, callback){
+  siteList[url] = null;
+  var save = JSON.stringify(siteList);
+  fs.writeFile(exports.paths.list,save, function(err){
+      fs.readFile(exports.paths.siteAssets + '/loading.html', "utf8",function(err,data){
+        callback(data);
+      });
+  });
 };
 
 exports.isURLArchived = function(archive, callback){

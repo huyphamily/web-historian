@@ -45,7 +45,10 @@ var getRequest = function(req, res){
 };
 
 var postRequest = function(req, res){
-  sendRequest(res);
+  //if url is "/" then proceed
+  if( req.url === '/' ){
+    archive.post(req, res, sendRequest);
+  }
 };
 
 var sendRequest = function(response, data, statusCode){

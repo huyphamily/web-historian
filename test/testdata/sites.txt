@@ -1,2 +1,1 @@
-example1.com
-example2.com
+{"example1.com":null,"example2.com":null,"www.google.com":"./archives/sites/www.google.com"}
