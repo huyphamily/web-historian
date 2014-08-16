@@ -10,9 +10,18 @@ exports.headers = headers = {
   'Content-Type': "text/html"
 };
 
+var routeMap = {
+  '/': '/index.html',
+};
+
 exports.serveAssets = function(res, asset, callback) {
+  var context = 'web/public';
+  var url = routeMap[asset.toString()] || asset;
   // Write some code here that helps serve up your static files!
   // (Static files are things like html (yours or archived from others...), css, or anything that doesn't change often.)
+
+  //fs.readFile ==> read the asset into data
+  fs.readFile(context + url, callback);
 };
 
 
